@@ -1,6 +1,5 @@
 import logging
 
-# make a logger called "usgs_product_finder"
 logger = logging.getLogger("usgs_product_finder")
 logger.setLevel(logging.DEBUG)
 
@@ -9,6 +8,8 @@ import pandas
 import geopandas
 import shapely
 import requests
+
+from typing import List, Dict
 
 
 class UsgsProductFinder:
@@ -34,7 +35,8 @@ class UsgsProductFinder:
             self.path_for_usgs_data = os.path.join(os.path.dirname(__file__), "data")
         self._load_in_wrs2()
 
-    def _find_products_via_filtered_geodataframe(self, filtered_geodataframe: geopandas.GeoDataFrame, satellite: int):
+    def _find_products_via_filtered_geodataframe(self, filtered_geodataframe: geopandas.GeoDataFrame,
+                                                 satellite: int, minimal_output=True) -> List[str] or pandas.DataFrame:
         """
         Find products that intersect with a geodataframe.
         :param filtered_geodataframe: AOI-Filtered geodataframe
@@ -42,7 +44,6 @@ class UsgsProductFinder:
         :return:
         """
 
-        satellite_csv_path = ""
         if satellite in [4, 5]:
             satellite_csv_path = self._download_l4_l5_csv()
         elif satellite == 7:
@@ -56,6 +57,10 @@ class UsgsProductFinder:
         logger.debug(f"As the satellite is {satellite}, the CSV file {satellite_csv_path} will be used")
         logger.debug(f"Loading in CSV file {satellite_csv_path}")
         total_count_of_matching_products = 0
+        if minimal_output:
+            output = []
+        else:
+            output_dataframe = pandas.DataFrame()
         for dataframe_chunk in pandas.read_csv(satellite_csv_path, chunksize=100000, low_memory=False):
             # if satellite is 7,8 or 9 convert Satellite column to str
             if satellite in [7, 8, 9]:
@@ -67,8 +72,22 @@ class UsgsProductFinder:
                 & (dataframe_chunk["WRS Row"].isin(filtered_geodataframe["ROW"]))
                 ]
             total_count_of_matching_products += len(filtered_dataframe_current_chunk)
+            if minimal_output:
+                for index, row in filtered_dataframe_current_chunk.iterrows():
+                    output.append({
+                        "display_id": row["Display ID"],
+                        "ordering_id": row["Ordering ID"],
+                        "landsat_product_id": row["Landsat Product Identifier L2"]
+                    })
+            else:
+                output_dataframe = pandas.concat([output_dataframe, filtered_dataframe_current_chunk])
 
         logger.debug(f"Found {total_count_of_matching_products} products")
+        if minimal_output:
+            return output
+        else:
+            return output_dataframe
+
 
     def find_products_via_wrs_row_and_path(self, wrs_row: int, wrs_path: int, satellite: int):
         """
@@ -81,26 +100,30 @@ class UsgsProductFinder:
         raise NotImplementedError("This method is not implemented yet")
 
     def find_products_via_shapely_object(self, shapely_multipolygon_object: shapely.geometry.multipolygon.MultiPolygon,
-                                         satellite: int):
+                                         satellite: int,
+                                         minimal_output: bool = True) -> List[Dict[str, str]] or pandas.DataFrame:
         """
         Find products that intersect with a shapely object.
         :param shapely_multipolygon_object:
         :param satellite:
+        :param minimal_output:
         :return:
         """
         filtered_geodataframe: geopandas.GeoDataFrame = self.geodataframe_wrs2[
             self.geodataframe_wrs2.intersects(shapely_multipolygon_object)]
-        return self._find_products_via_filtered_geodataframe(filtered_geodataframe, satellite)
+        return self._find_products_via_filtered_geodataframe(filtered_geodataframe, satellite, minimal_output)
 
-    def find_products_via_wkt(self, wkt: str, satellite: int):
+    def find_products_via_wkt(self, wkt: str, satellite: int, minimal_output=True) -> List[Dict[
+        str, str]] or pandas.DataFrame:
         """
         Find products that intersect with a wkt string.
         :param wkt:
         :param satellite:
+        :param minimal_output:
         :return:
         """
         shapely_multipolygon_object = shapely.wkt.loads(wkt)
-        return self.find_products_via_shapely_object(shapely_multipolygon_object, satellite)
+        return self.find_products_via_shapely_object(shapely_multipolygon_object, satellite, minimal_output)
 
     def _download_file(self, url: str) -> str:
         """
