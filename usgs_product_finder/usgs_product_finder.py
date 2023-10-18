@@ -54,6 +54,21 @@ class UsgsProductFinder:
                 mission are not supported")
 
         logger.debug(f"As the satellite is {satellite}, the CSV file {satellite_csv_path} will be used")
+        logger.debug(f"Loading in CSV file {satellite_csv_path}")
+        total_count_of_matching_products = 0
+        for dataframe_chunk in pandas.read_csv(satellite_csv_path, chunksize=100000, low_memory=False):
+            # if satellite is 7,8 or 9 convert Satellite column to str
+            if satellite in [7, 8, 9]:
+                dataframe_chunk["Satellite"] = dataframe_chunk["Satellite"].astype(str)
+
+            filtered_dataframe_current_chunk = dataframe_chunk[
+                (dataframe_chunk["Satellite"].str.contains(str(satellite)))
+                & (dataframe_chunk["WRS Path"].isin(filtered_geodataframe["PATH"]))
+                & (dataframe_chunk["WRS Row"].isin(filtered_geodataframe["ROW"]))
+                ]
+            total_count_of_matching_products += len(filtered_dataframe_current_chunk)
+
+        logger.debug(f"Found {total_count_of_matching_products} products")
 
     def find_products_via_wrs_row_and_path(self, wrs_row: int, wrs_path: int, satellite: int):
         """
@@ -63,7 +78,7 @@ class UsgsProductFinder:
         :param satellite:
         :return:
         """
-        pass
+        raise NotImplementedError("This method is not implemented yet")
 
     def find_products_via_shapely_object(self, shapely_multipolygon_object: shapely.geometry.multipolygon.MultiPolygon,
                                          satellite: int):
