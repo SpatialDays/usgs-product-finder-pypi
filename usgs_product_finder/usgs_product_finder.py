@@ -34,6 +34,27 @@ class UsgsProductFinder:
             self.path_for_usgs_data = os.path.join(os.path.dirname(__file__), "data")
         self._load_in_wrs2()
 
+    def _find_products_via_filtered_geodataframe(self, filtered_geodataframe: geopandas.GeoDataFrame, satellite: int):
+        """
+        Find products that intersect with a geodataframe.
+        :param filtered_geodataframe: AOI-Filtered geodataframe
+        :param satellite: Number for the satellite
+        :return:
+        """
+
+        satellite_csv_path = ""
+        if satellite in [4, 5]:
+            satellite_csv_path = self._download_l4_l5_csv()
+        elif satellite == 7:
+            satellite_csv_path = self._download_l7_csv()
+        elif satellite in [8, 9]:
+            satellite_csv_path = self._download_l8_l9_csv()
+        else:
+            raise ValueError("Satellite must be 4, 5, 7, 8 or 9, other satellites from landsat \
+                mission are not supported")
+
+        logger.debug(f"As the satellite is {satellite}, the CSV file {satellite_csv_path} will be used")
+
     def find_products_via_wrs_row_and_path(self, wrs_row: int, wrs_path: int, satellite: int):
         """
         Find products that intersect with a WRS row and path.
@@ -52,6 +73,9 @@ class UsgsProductFinder:
         :param satellite:
         :return:
         """
+        filtered_geodataframe: geopandas.GeoDataFrame = self.geodataframe_wrs2[
+            self.geodataframe_wrs2.intersects(shapely_multipolygon_object)]
+        return self._find_products_via_filtered_geodataframe(filtered_geodataframe, satellite)
 
     def find_products_via_wkt(self, wkt: str, satellite: int):
         """
@@ -60,7 +84,8 @@ class UsgsProductFinder:
         :param satellite:
         :return:
         """
-        pass
+        shapely_multipolygon_object = shapely.wkt.loads(wkt)
+        return self.find_products_via_shapely_object(shapely_multipolygon_object, satellite)
 
     def _download_file(self, url: str) -> str:
         """
@@ -77,7 +102,8 @@ class UsgsProductFinder:
                         os.path.exists(local_filepath)
                         and (
                                 os.path.getmtime(local_filepath)
-                                < (pandas.Timestamp.now() - pandas.Timedelta(days=self.max_age_of_usgs_data)).timestamp()
+                                < (pandas.Timestamp.now() - pandas.Timedelta(
+                            days=self.max_age_of_usgs_data)).timestamp()
                         )
                 )
         ):
