@@ -7,7 +7,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = '0.0.1'
+VERSION = '0.0.3'
 DESCRIPTION = 'USGS Finder Utility that finds USGS datasets based on a user input'
 LONG_DESCRIPTION = 'USGS Finder Utility that finds USGS datasets based on a user input'
 
@@ -21,6 +21,8 @@ setup(
     long_description_content_type="text/markdown",
     long_description=long_description,
     packages=find_packages(),
+    include_package_data=True,
+    package_data={'usgs_product_finder': ['files/*.geojson']},
     install_requires=["requests==2.31.0",
                       "shapely==2.0.2",
                       "pandas==2.1.1",

@@ -141,6 +141,9 @@ class UsgsProductFinder:
         ):
             logger.debug(f"obtaining CSV file from {url} into {local_filepath}")
             r = requests.get(url, stream=True)
+            # make folder if it doesn't exist
+            if not os.path.exists(os.path.dirname(local_filepath)):
+                os.makedirs(os.path.dirname(local_filepath))
             with open(local_filepath, "wb") as f:
                 f.write(r.content)
             logger.debug("obtain complete")
