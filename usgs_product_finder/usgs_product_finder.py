@@ -133,9 +133,8 @@ class UsgsProductFinder:
                 (
                         os.path.exists(local_filepath)
                         and (
-                                os.path.getmtime(local_filepath)
-                                < (pandas.Timestamp.now() - pandas.Timedelta(
-                            days=self.max_age_of_usgs_data)).timestamp()
+                            os.path.getmtime(local_filepath)
+                            < (pandas.Timestamp.now() - pandas.Timedelta(days=self.max_age_of_usgs_data)).timestamp()
                         )
                 )
         ):
@@ -162,7 +161,7 @@ class UsgsProductFinder:
         l4_l5_csv_url = "https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM_C2_L2.csv.gz"
         return self._obtain_file(l4_l5_csv_url)
 
-    def _obtain_l7_csv(self):
+    def _obtain_l7_csv(self) -> str:
         """
         Obtain the csv for Landsat 7, downloading if necessary.
         :return: FIle location
@@ -170,7 +169,7 @@ class UsgsProductFinder:
         l7_url = "https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_C2_L2.csv.gz"
         return self._obtain_file(l7_url)
 
-    def _obtain_l8_l9_csv(self):
+    def _obtain_l8_l9_csv(self) -> str:
         """
         Obtain the csv's for Landsat 8 and 9, downloading if necessary.
         :return: FIle location
@@ -178,10 +177,9 @@ class UsgsProductFinder:
         l8_l9_url = "https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_OT_C2_L2.csv.gz"
         return self._obtain_file(l8_l9_url)
 
-    def _load_in_wrs2(self):
+    def _load_in_wrs2(self) -> None:
         """
         Load in the WRS2 shapefile
-        :return:
         """
         wrs2_filepath = os.path.join(os.path.dirname(__file__), "files", "WRS2_descending.geojson")
         logger.debug(f"Loading in WRS2 shapefile from {wrs2_filepath}")
