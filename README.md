@@ -28,8 +28,8 @@ aoi_wkt = """MULTIPOLYGON (((-175 -12,-179.99999 -12,-179.99999 -20,-175 -20,-17
     -12,179.99999 -20,175 -20,175 -12))) """
     
 # find products
-pandas_obj = (usgs_product_finder.find_products_via_wkt(aoi_wkt, 8, minimal_output=False))
-list_of_dicts = (usgs_product_finder.find_products_via_wkt(aoi_wkt, 8, minimal_output=True))
+pandas_obj = usgs_product_finder.find_products_via_wkt(aoi_wkt, 8, minimal_output=False)
+list_of_dicts = usgs_product_finder.find_products_via_wkt(aoi_wkt, 8, minimal_output=True)
 
 
 ```
