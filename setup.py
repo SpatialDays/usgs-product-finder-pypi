@@ -24,7 +24,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     package_data={'usgs_product_finder': ['files/*.geojson']},
-    install_requires=["requests==2.31.0",
+    install_requires=["requests==2.32.0",
                       "shapely==2.0.2",
                       "pandas==2.1.1",
                       "geopandas==0.14.0"
